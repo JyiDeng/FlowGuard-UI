@@ -39,9 +39,9 @@ python main.py
 
 For development mode:
 
-Open guest mode: http://localhost:5001
+Open guest mode: http://localhost:FLASK_PORT
 
-Open user test mode: http://localhost:5001/user-test
+Open user test mode: http://localhost:FLASK_PORT/user-test
 
 
 ## Project Structure And File Relations
@@ -117,7 +117,7 @@ TOKEN="<paste-token>"
 for i in $(seq -w 1 20); do
   username="test_user_${i}"
   password="test_pass_${i}"
-  curl -s -X POST http://localhost:5001/api/users \
+  curl -s -X POST http://localhost:FLASK_PORT/api/users \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer ${TOKEN}" \
     -d "{\"username\":\"${username}\",\"password\":\"${password}\",\"role\":\"guest\",\"attrs\":{\"study\":\"user_test\"}}"

@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Study - UML Tasks</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --radius: 12px; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-size: 14px;
+            color: #0f172a;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 14px 36px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #334155;
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.55em;
+            margin-bottom: 6px;
+            color: #1e293b;
+            font-family: 'Source Serif 4', serif;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 0.95em;
+            color: #475569;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+
+        .auth-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-start;
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 10;
+        }
+
+        .auth-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid #94a3b8;
+            border-radius: var(--radius);
+            background: #ffffff;
+            color: #0f172a;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .auth-button:hover {
+            background: #f8fafc;
+            border-color: #64748b;
+        }
+
+        .auth-status {
+            font-size: 0.9em;
+            color: #334155;
+            background: rgba(255,255,255,0.75);
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            padding: 6px 10px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .left-panel {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 12px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+            padding: 14px;
+        }
+
+        .card h3 {
+            font-size: 1em;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .muted {
+            color: #475569;
+            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .meta-list {
+            display: grid;
+            gap: 6px;
+            margin-top: 8px;
+            color: #334155;
+            font-size: 0.9em;
+        }
+
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            font-size: 0.85em;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .chat-log {
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            background: #f8fafc;
+            min-height: 260px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-log::-webkit-scrollbar { width: 10px; }
+        .chat-log::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+            border: 2px solid #f8fafc;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .message .role {
+            font-size: 0.75em;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .message .bubble {
+            border: 1px solid #dbe3ee;
+            border-radius: 8px;
+            padding: 8px 10px;
+            background: #fff;
+            line-height: 1.45;
+            color: #0f172a;
+        }
+
+        .message.user .bubble {
+            background: #eef6ff;
+            border-color: #bfdbfe;
+        }
+
+        .message.assistant .bubble {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
+
+        .input-row input {
+            border: 1px solid #cbd5e1;
+            border-radius: var(--radius);
+            padding: 8px 10px;
+            font-size: 0.95em;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .input-row input:focus,
+        .modal input:focus {
+            outline: none;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            background: #2563eb;
+            color: #fff;
+            transition: transform 0.05s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+        .btn:hover:not(:disabled),
+        .btn-primary:hover {
+            background: #1d4ed8;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.2);
+        }
+        .btn:active:not(:disabled),
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn:disabled,
+        .input-row input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .right-panel {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 12px;
+        }
+
+        .uml-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .uml-box {
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            background: #fff;
+            min-height: 620px;
+            padding: 12px;
+            overflow: auto;
+        }
+
+        .uml-placeholder {
+            color: #64748b;
+            font-size: 0.95em;
+            min-height: 596px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .uml-box svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            width: 340px;
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 14px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+        }
+
+        .modal h3 {
+            margin-bottom: 8px;
+            font-size: 1em;
+            color: #0f172a;
+        }
+
+        .modal p {
+            color: #475569;
+            font-size: 0.9em;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .modal label {
+            display: block;
+            font-size: 0.85em;
+            color: #475569;
+            margin: 10px 0 6px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: var(--radius);
+            font-size: 0.9em;
+        }
+
+        .modal .error {
+            color: #dc2626;
+            font-size: 0.85em;
+            min-height: 1.2em;
+            margin-top: 8px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #0f172a; }
+
+        .login-dialog {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            min-height: 340px;
+        }
+
+        #login-modal .modal {
+            width: min(760px, calc(100vw - 40px));
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .login-pane {
+            padding: 18px;
+            background: #ffffff;
+        }
+
+        .login-pane h3 {
+            font-size: 1.05em;
+            margin-bottom: 6px;
+        }
+
+        .login-pane p {
+            margin-bottom: 10px;
+        }
+
+        .info-pane {
+            padding: 18px;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            border-left: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .info-pane h3 {
+            font-family: 'Source Serif 4', serif;
+            font-size: 1.15em;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .info-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            padding: 10px 12px;
+        }
+
+        .info-card-title {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .info-card p,
+        .info-pane ul {
+            margin: 0;
+            color: #475569;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .info-pane ul {
+            padding-left: 18px;
+        }
+
+        .done-modal h3 { color: #047857; }
+        .final-modal h3 { color: #1d4ed8; }
+
+        @media (max-width: 980px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .left-panel { grid-template-rows: auto auto auto auto; }
+            .uml-box { min-height: 420px; }
+            .uml-placeholder { min-height: 396px; }
+            .auth-bar {
+                position: static;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+            .header { padding-top: 12px; }
+            .login-dialog { grid-template-columns: 1fr; }
+            .info-pane { border-left: none; border-top: 1px solid #e2e8f0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="auth-bar">
+                <button class="auth-button" id="auth-button" type="button">Login</button>
+                <span class="auth-status" id="auth-status">Not logged in</span>
+            </div>
+            <h1>UML User Study</h1>
+            <p>Complete the available UML tasks in sequence. Each task finishes when you reach any stop node.</p>
+        </div>
+
+        <div class="main-layout">
+            <div class="left-panel">
+                <div class="card">
+                    <div class="progress-row">
+                        <h3>Task Progress</h3>
+                        <span class="badge" id="task-counter">Task 0 / 0</span>
+                    </div>
+                    <div class="muted" id="task-description">Sign in to begin the study. You will complete the available UML tasks, one at a time.</div>
+                    <div class="meta-list">
+                        <div>Participant: <strong id="current-user">-</strong></div>
+                        <div>Status: <span id="task-status">Waiting for login</span></div>
+                        <div>Completed: <span id="task-progress">0 / 0</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Current Task</h3>
+                    <div class="muted" id="task-title">Awaiting login</div>
+                    <div class="input-row" style="margin-top:10px;">
+                        <select id="task-select" disabled style="flex:1;">
+                            <option value="">Select a task...</option>
+                        </select>
+                    </div>
+                    <div class="muted" style="margin-top:8px; font-size:12px;">
+                        Auto-advance still works after completion. You can also switch tasks here to continue/save records.
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Conversation</h3>
+                    <div class="chat-log" id="chat-log"></div>
+                </div>
+
+                <div class="card">
+                    <div class="input-row">
+                        <input id="chat-input" type="text" placeholder="Type your next step..." disabled>
+                        <button class="btn" id="send-btn" type="button" disabled>Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="card uml-toolbar">
+                    <h3 style="margin:0;">UML Diagram</h3>
+                    <span class="badge" id="uml-status">Waiting</span>
+                </div>
+                <div class="uml-box" id="uml-container">
+                    <div class="uml-placeholder">Diagram will appear after login.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal">
+            <div class="login-dialog">
+                <div class="login-pane">
+                    <h3>Participant Login</h3>
+                    <p>Please enter the username and password provided by the researcher.</p>
+                    <label for="login-username">Username</label>
+                    <input id="login-username" type="text" autocomplete="username">
+                    <label for="login-password">Password</label>
+                    <input id="login-password" type="password" autocomplete="current-password">
+                    <div class="error" id="login-error"></div>
+                    <div class="modal-actions">
+                        <button class="btn-primary" id="login-button" type="button">Sign In</button>
+                    </div>
+                </div>
+                <div class="info-pane">
+                    <h3>Info</h3>
+                    <div class="info-card">
+                        <div class="info-card-title">How it works</div>
+                        <p>You will complete the available UML tasks, one at a time. Each task ends when the workflow reaches any stop node.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">What is recorded</div>
+                        <p>Your interactions in the study interface are logged for research analysis.</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">Before you start</div>
+                        <ul>
+                            <li>Use the assigned account only</li>
+                            <li>Complete tasks in order</li>
+                            <li>Wait for the next task screen after completion</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="task-complete-modal">
+        <div class="modal done-modal">
+            <h3 id="complete-title">Task Completed</h3>
+            <p id="complete-message">Next task will begin shortly.</p>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="final-modal">
+        <div class="modal final-modal">
+            <h3>Thank you for participating</h3>
+            <p>Your study session is complete. You may close this page.</p>
+        </div>
+    </div>
+
+    <script>
+        let authToken = null;
+        let csrfToken = null;
+        let conversationId = null;
+        let tasks = [];
+        let currentTaskIndex = 0;
+        let locked = true;
+        let countdownInterval = null;
+        let countdownTimeout = null;
+        let completedTaskKeys = new Set();
+        const TASK_DELAY_MS = 10000;
+
+        const authButton = document.getElementById('auth-button');
+        const authStatus = document.getElementById('auth-status');
+        const currentUser = document.getElementById('current-user');
+        const taskStatus = document.getElementById('task-status');
+        const taskProgress = document.getElementById('task-progress');
+        const taskCounter = document.getElementById('task-counter');
+        const taskTitle = document.getElementById('task-title');
+        const taskSelect = document.getElementById('task-select');
+        const taskDescription = document.getElementById('task-description');
+        const umlStatus = document.getElementById('uml-status');
+        const umlContainer = document.getElementById('uml-container');
+        const chatLog = document.getElementById('chat-log');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-btn');
+        const loginModal = document.getElementById('login-modal');
+        const loginError = document.getElementById('login-error');
+        const completeModal = document.getElementById('task-complete-modal');
+        const completeTitle = document.getElementById('complete-title');
+        const completeMessage = document.getElementById('complete-message');
+        const finalModal = document.getElementById('final-modal');
+
+        function showModal(el) { el.style.display = 'flex'; }
+        function hideModal(el) { el.style.display = 'none'; }
+
+        function setAuthUI(username) {
+            if (username) {
+                authButton.textContent = `User: ${username}`;
+                authStatus.textContent = 'Logged in';
+                currentUser.textContent = username;
+            } else {
+                authButton.textContent = 'Login';
+                authStatus.textContent = 'Not logged in';
+                currentUser.textContent = '-';
+            }
+        }
+
+        function getNonce() {
+            const bytes = new Uint8Array(16);
+            window.crypto.getRandomValues(bytes);
+            return btoa(String.fromCharCode(...bytes)).replace(/=+$/g, '');
+        }
+
+        async function apiFetch(url, options = {}) {
+            const headers = options.headers || {};
+            if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+            if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+            if (options.method && options.method.toUpperCase() !== 'GET') {
+                headers['X-Request-Nonce'] = getNonce();
+                headers['X-Request-Timestamp'] = Math.floor(Date.now() / 1000).toString();
+            }
+            options.headers = headers;
+            const resp = await fetch(url, options);
+            return resp;
+        }
+
+        function setInputLocked(isLocked) {
+            locked = isLocked;
+            chatInput.disabled = isLocked;
+            sendButton.disabled = isLocked;
+        }
+
+        function clearCompletionCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            if (countdownTimeout) {
+                clearTimeout(countdownTimeout);
+                countdownTimeout = null;
+            }
+            hideModal(completeModal);
+        }
+
+        function resetChat() {
+            chatLog.innerHTML = '';
+        }
+
+        function appendMessage(role, text) {
+            const wrap = document.createElement('div');
+            wrap.className = `message ${role}`;
+            const roleEl = document.createElement('div');
+            roleEl.className = 'role';
+            roleEl.textContent = role;
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+            wrap.appendChild(roleEl);
+            wrap.appendChild(bubble);
+            chatLog.appendChild(wrap);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function updateProgressUI() {
+            const total = tasks.length;
+            const completed = Math.min(completedTaskKeys.size, total);
+            const shown = total ? Math.min(currentTaskIndex + 1, total) : 0;
+            taskCounter.textContent = `Task ${shown} / ${total}`;
+            taskProgress.textContent = `${completed} / ${total}`;
+        }
+
+        function refreshTaskSelector() {
+            taskSelect.innerHTML = '';
+            if (!tasks.length) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'No tasks';
+                taskSelect.appendChild(opt);
+                taskSelect.disabled = true;
+                return;
+            }
+            tasks.forEach((task, idx) => {
+                const opt = document.createElement('option');
+                opt.value = String(idx);
+                opt.textContent = task.title || `Task ${idx + 1}`;
+                taskSelect.appendChild(opt);
+            });
+            taskSelect.disabled = false;
+            taskSelect.value = String(Math.min(currentTaskIndex, tasks.length - 1));
+        }
+
+        function isStopState(state) {
+            if (!state) return false;
+            const v = String(state).toLowerCase();
+            return v === 'stop' || v === '<end>';
+        }
+
+        async function safeJson(resp) {
+            try { return await resp.json(); } catch (_) { return { success: false, error: `http ${resp.status}` }; }
+        }
+
+        async function logTaskEvent(event, details) {
+            if (!authToken) return;
+            const task = tasks[currentTaskIndex] || null;
+            try {
+                await apiFetch('/api/task_event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        event,
+                        task_key: task ? task.key : null,
+                        task_index: currentTaskIndex,
+                        details: details || {}
+                    })
+                });
+            } catch (_) {}
+        }
+
+        async function login() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            if (!username || !password) {
+                loginError.textContent = 'Please enter username and password.';
+                return;
+            }
+            loginError.textContent = '';
+            const resp = await apiFetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await safeJson(resp);
+            if (!resp.ok || !data.success) {
+                loginError.textContent = `Login failed: ${data.error || resp.status}`;
+                return;
+            }
+            authToken = data.token;
+            csrfToken = data.csrf_token;
+            conversationId = data.conversation_id;
+            setAuthUI(data.user.username);
+            hideModal(loginModal);
+            taskStatus.textContent = 'Loading tasks';
+            await logTaskEvent('login_success', { username: data.user.username });
+            await loadTasks();
+        }
+
+        async function loadTasks() {
+            umlStatus.textContent = 'Loading';
+            const resp = await apiFetch('/api/user_test_tasks');
+            const data = await safeJson(resp);
+            if (!resp.ok || !data.success) {
+                taskStatus.textContent = 'Task list failed';
+                taskDescription.textContent = `Failed to load tasks: ${data.error || resp.status}`;
+                umlStatus.textContent = 'Error';
+                appendMessage('system', `Task list request failed (${data.error || resp.status}).`);
+                return;
+            }
+            tasks = data.tasks || [];
+            currentTaskIndex = 0;
+            completedTaskKeys = new Set();
+            refreshTaskSelector();
+            updateProgressUI();
+            if (!tasks.length) {
+                taskStatus.textContent = 'No tasks';
+                taskDescription.textContent = 'No user study tasks are available for this account.';
+                umlStatus.textContent = 'Error';
+                return;
+            }
+            await startTask(currentTaskIndex);
+        }
+
+        async function startTask(index, options = {}) {
+            const task = tasks[index];
+            if (!task) return;
+            currentTaskIndex = index;
+            if (taskSelect && taskSelect.options.length) {
+                taskSelect.value = String(index);
+            }
+            clearCompletionCountdown();
+            resetChat();
+            appendMessage('system', 'Begin this task. Reach any stop node to complete it.');
+            taskTitle.textContent = task.title || `Task ${index + 1}`;
+            taskDescription.textContent = task.description || 'Follow the UML diagram and complete the task.';
+            taskStatus.textContent = `In progress (Task ${index + 1})`;
+            updateProgressUI();
+            umlStatus.textContent = 'Loading';
+            setInputLocked(true);
+            umlContainer.innerHTML = '<div class="uml-placeholder">Loading task diagram...</div>';
+
+            const startResp = await apiFetch(`/api/user_test_tasks/${encodeURIComponent(task.key)}/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    task_index: index,
+                    total_tasks: tasks.length
+                })
+            });
+            const startData = await safeJson(startResp);
+            if (!startResp.ok || !startData.success) {
+                taskStatus.textContent = 'Task start failed';
+                umlStatus.textContent = 'Error';
+                umlContainer.innerHTML = `<div class="uml-placeholder">Unable to start task: ${startData.error || startResp.status}</div>`;
+                appendMessage('system', `Unable to start task (${startData.error || startResp.status}).`);
+                if (startResp.status === 401 || startResp.status === 403) {
+                    showModal(loginModal);
+                }
+                return;
+            }
+
+            conversationId = startData.conversation_id;
+            const plantuml = startData.plantuml || task.plantuml;
+            await renderUml(plantuml);
+            umlStatus.textContent = 'Ready';
+            setInputLocked(false);
+            chatInput.focus();
+            if (options.manualSwitch) {
+                await logTaskEvent('task_selected_from_dropdown', { task_key: task.key, title: task.title, task_index: index });
+            }
+            await logTaskEvent('task_started', { task_key: task.key, title: task.title });
+        }
+
+        async function renderUml(plantuml) {
+            const resp = await apiFetch('/api/render_uml', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plantuml })
+            });
+            const data = await safeJson(resp);
+            if (!resp.ok || !data.success) {
+                umlStatus.textContent = 'Error';
+                umlContainer.innerHTML = `<div class="uml-placeholder">Diagram load failed: ${data.error || resp.status}</div>`;
+                appendMessage('system', `Diagram render failed (${data.error || resp.status}).`);
+                if (resp.status === 401 || resp.status === 403) {
+                    showModal(loginModal);
+                }
+                return;
+            }
+            umlContainer.innerHTML = data.svg;
+        }
+
+        async function sendMessage() {
+            if (locked) return;
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            chatInput.value = '';
+            appendMessage('user', msg);
+            setInputLocked(true);
+
+            const resp = await apiFetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg, conversation_id: conversationId })
+            });
+            const data = await safeJson(resp);
+            if (!resp.ok || !data.success) {
+                appendMessage('system', `Chat failed: ${data.error || resp.status}`);
+                taskStatus.textContent = 'Chat error';
+                if (resp.status === 401 || resp.status === 403) {
+                    showModal(loginModal);
+                }
+                setInputLocked(false);
+                return;
+            }
+
+            appendMessage('assistant', data.response || '...');
+            conversationId = data.conversation_id || conversationId;
+
+            if (isStopState(data.current_state)) {
+                await onTaskCompleted();
+                return;
+            }
+
+            setInputLocked(false);
+            chatInput.focus();
+        }
+
+        async function onTaskCompleted() {
+            setInputLocked(true);
+            const completedTask = tasks[currentTaskIndex];
+            if (completedTask && completedTask.key) {
+                completedTaskKeys.add(completedTask.key);
+            }
+            updateProgressUI();
+            const taskNo = currentTaskIndex + 1;
+            taskStatus.textContent = `Task ${taskNo} completed`;
+            completeTitle.textContent = `Task ${taskNo} completed`;
+            let remain = 10;
+            completeMessage.textContent = `Next task starts in ${remain} seconds.`;
+            showModal(completeModal);
+            await logTaskEvent('task_completed', { task_number: taskNo });
+
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (countdownTimeout) clearTimeout(countdownTimeout);
+
+            countdownInterval = setInterval(() => {
+                remain -= 1;
+                completeMessage.textContent = `Next task starts in ${Math.max(remain, 0)} seconds.`;
+                if (remain <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                }
+            }, 1000);
+
+            countdownTimeout = setTimeout(async () => {
+                hideModal(completeModal);
+                const nextIndex = currentTaskIndex + 1;
+                if (nextIndex >= tasks.length) {
+                    taskStatus.textContent = 'Study completed';
+                    taskTitle.textContent = 'All tasks completed';
+                    taskDescription.textContent = 'Thank you for participating.';
+                    umlStatus.textContent = 'Completed';
+                    showModal(finalModal);
+                    await logTaskEvent('study_completed', { total_tasks: tasks.length });
+                    return;
+                }
+                await startTask(nextIndex);
+            }, TASK_DELAY_MS);
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        taskSelect.addEventListener('change', async (e) => {
+            const idx = parseInt(e.target.value, 10);
+            if (Number.isNaN(idx) || idx < 0 || idx >= tasks.length) return;
+            await startTask(idx, { manualSwitch: true });
+        });
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+        document.getElementById('login-button').addEventListener('click', login);
+        document.getElementById('login-password').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') login();
+        });
+        authButton.addEventListener('click', () => showModal(loginModal));
+
+        window.addEventListener('load', () => {
+            updateProgressUI();
+            setAuthUI(null);
+            setInputLocked(true);
+            showModal(loginModal);
+            document.getElementById('login-username').focus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+[
+    {
+        "id": "1_0_0",
+        "flowchart": "@startuml\nstart\n:获取购物车信息并计算好优惠;\n\n:从ums_member_receive_address表中获取会员收货地址列表;\n:获取该会员所有优惠券信息;\n\n:根据use_type判断每个优惠券是否可用;\n\nif (全场通用?) then (是)\n  if (判断所有商品总金额是否满足使用起点金额?) then (是)\n    :得到用户可用优惠券列表;\n  else (否)\n    :得到用户不可用优惠券列表;\n    stop\n  endif\nelse (否)\n  if (指定分类?) then (是)\n    if (判断指定分类商品总金额是否满足使用起点金额?) then (是)\n      :得到用户可用优惠券列表;\n    else (否)\n      :得到用户不可用优惠券列表;\n      stop\n    endif\n  else (否)\n    if (指定商品?) then (是)\n      if (判断指定商品总金额是否满足使用起点金额?) then (是)\n        :得到用户可用优惠券列表;\n      else (否)\n        :得到用户不可用优惠券列表;\n        stop\n      endif\n    else (否)\n      :无可用优惠券;\n      stop\n    endif\n  endif\nendif\n\n:得到用户可用优惠券列表;\n:获取用户积分;\n:获取积分使用规则;\n\n:计算总金额、活动优惠、应付金额;\nstop\n@enduml",
+        "current_state": "<start>",
+        "next_state": "获取购物车信息并计算好优惠",
+        "user_input": "我需要获取购物车信息并计算优惠。",
+        "robot_output": "好的，我正在为您获取购物车信息并计算优惠。"
+    },
+    {
+        "id": "1_0_1",
+        "flowchart": "@startuml\nstart\n:获取购物车信息并计算好优惠;\n\n:从ums_member_receive_address表中获取会员收货地址列表;\n:获取该会员所有优惠券信息;\n\n:根据use_type判断每个优惠券是否可用;\n\nif (全场通用?) then (是)\n  if (判断所有商品总金额是否满足使用起点金额?) then (是)\n    :得到用户可用优惠券列表;\n  else (否)\n    :得到用户不可用优惠券列表;\n    stop\n  endif\nelse (否)\n  if (指定分类?) then (是)\n    if (判断指定分类商品总金额是否满足使用起点金额?) then (是)\n      :得到用户可用优惠券列表;\n    else (否)\n      :得到用户不可用优惠券列表;\n      stop\n    endif\n  else (否)\n    if (指定商品?) then (是)\n      if (判断指定商品总金额是否满足使用起点金额?) then (是)\n        :得到用户可用优惠券列表;\n      else (否)\n        :得到用户不可用优惠券列表;\n        stop\n      endif\n    else (否)\n      :无可用优惠券;\n      stop\n    endif\n  endif\nendif\n\n:得到用户可用优惠券列表;\n:获取用户积分;\n:获取积分使用规则;\n\n:计算总金额、活动优惠、应付金额;\nstop\n@enduml",
+        "current_state": "<start>",
+        "next_state": "获取购物车信息并计算好优惠",
+        "user_input": "我想检查购物车的优惠信息。",
+        "robot_output": "正在为您获取购物车信息并计算优惠。"
+    },
+    {
+        "id": "1_1_0",
+        "flowchart": "@startuml\nstart\n:获取购物车信息并计算好优惠;\n\n:从ums_member_receive_address表中获取会员收货地址列表;\n:获取该会员所有优惠券信息;\n\n:根据use_type判断每个优惠券是否可用;\n\nif (全场通用?) then (是)\n  if (判断所有商品总金额是否满足使用起点金额?) then (是)\n    :得到用户可用优惠券列表;\n  else (否)\n    :得到用户不可用优惠券列表;\n    stop\n  endif\nelse (否)\n  if (指定分类?) then (是)\n    if (判断指定分类商品总金额是否满足使用起点金额?) then (是)\n      :得到用户可用优惠券列表;\n    else (否)\n      :得到用户不可用优惠券列表;\n      stop\n    endif\n  else (否)\n    if (指定商品?) then (是)\n      if (判断指定商品总金额是否满足使用起点金额?) then (是)\n        :得到用户可用优惠券列表;\n      else (否)\n        :得到用户不可用优惠券列表;\n        stop\n      endif\n    else (否)\n      :无可用优惠券;\n      stop\n    endif\n  endif\nendif\n\n:得到用户可用优惠券列表;\n:获取用户积分;\n:获取积分使用规则;\n\n:计算总金额、活动优惠、应付金额;\nstop\n@enduml",
+        "current_state": "获取购物车信息并计算好优惠",
+        "next_state": "从ums_member_receive_address表中获取会员收货地址列表",
+        "user_input": "购物车信息及优惠计算已完成。",
+        "robot_output": "正在从ums_member_receive_address表中获取会员收货地址列表。"
+    },
+    {
+        "id": "1_1_1",
+        "flowchart": "@startuml\nstart\n:获取购物车信息并计算好优惠;\n\n:从ums_member_receive_address表中获取会员收货地址列表;\n:获取该会员所有优惠券信息;\n\n:根据use_type判断每个优惠券是否可用;\n\nif (全场通用?) then (是)\n  if (判断所有商品总金额是否满足使用起点金额?) then (是)\n    :得到用户可用优惠券列表;\n  else (否)\n    :得到用户不可用优惠券列表;\n    stop\n  endif\nelse (否)\n  if (指定分类?) then (是)\n    if (判断指定分类商品总金额是否满足使用起点金额?) then (是)\n      :得到用户可用优惠券列表;\n    else (否)\n      :得到用户不可用优惠券列表;\n      stop\n    endif\n  else (否)\n    if (指定商品?) then (是)\n      if (判断指定商品总金额是否满足使用起点金额?) then (是)\n        :得到用户可用优惠券列表;\n      else (否)\n        :得到用户不可用优惠券列表;\n        stop\n      endif\n    else (否)\n      :无可用优惠券;\n      stop\n    endif\n  endif\nendif\n\n:得到用户可用优惠券列表;\n:获取用户积分;\n:获取积分使用规则;\n\n:计算总金额、活动优惠、应付金额;\nstop\n@enduml",
+        "current_state": "获取购物车信息并计算好优惠",
+        "next_state": "从ums_member_receive_address表中获取会员收货地址列表",
+        "user_input": "购物车信息已获取并已计算好优惠。",
+        "robot_output": "现在为您获取会员收货地址列表。"
+    }
+
+]

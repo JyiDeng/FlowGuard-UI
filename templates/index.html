@@ -1,0 +1,2613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600&display=swap" rel="stylesheet">
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.0/cytoscape.min.js"></script> -->
+
+    <!-- Cytoscape.js -->
+    <script src="https://unpkg.com/cytoscape@3.33.1/dist/cytoscape.min.js"></script>
+
+    <!-- ELK core -->
+    <script src="https://unpkg.com/elkjs@0.10.0/lib/elk.bundled.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+
+    <!-- Cytoscape-ELK plugin -->
+    <script src="https://unpkg.com/cytoscape-elk@2.3.0/dist/cytoscape-elk.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flowguard Conversation System Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --radius: 12px;
+        }
+        
+        #cy {
+        width: 100%;
+        height: 600px;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--radius);
+        background: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #334155;
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .header h1 {
+            font-size: 1.6em;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .header h1.study-title {
+            font-family: "Source Serif 4", Georgia, serif;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 0.95em;
+            opacity: 0.8;
+            line-height: 1.5;
+            color: #475569;
+        }
+
+        .auth-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-start;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .auth-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid #94a3b8;
+            border-radius: var(--radius);
+            background: #ffffff;
+            color: #0f172a;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+        .auth-button:hover { background: #f8fafc; border-color: #64748b; }
+
+        .info-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid #f59e0b;
+            border-radius: var(--radius);
+            background: #fef3c7;
+            color: #92400e;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .info-popover {
+            position: absolute;
+            top: 42px;
+            left: 0;
+            width: 320px;
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: var(--radius);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+            padding: 12px 14px;
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 1001;
+        }
+
+        .info-popover.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .info-popover h4 {
+            font-size: 0.95em;
+            margin-bottom: 6px;
+            color: #0f172a;
+        }
+
+        .info-popover p {
+            font-size: 0.85em;
+            color: #475569;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+
+        .auth-status {
+            font-size: 0.9em;
+            color: #334155;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            width: 320px;
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+        }
+
+        .study-task-card {
+            margin: 10px 12px 0;
+            border: 1px solid #cbd5e1;
+            background: #eef2f7;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+            padding: 10px 12px;
+        }
+
+        .study-task-label {
+            color: #0f172a;
+            font-size: 0.88em;
+            font-weight: 700;
+            font-family: "Source Serif 4", Georgia, serif;
+            white-space: nowrap;
+        }
+
+        .study-task-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+        }
+
+        .study-task-badge {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #0f172a;
+            border-radius: 999px;
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 4px 10px;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .study-task-select {
+            flex: 1;
+            min-width: 0;
+            height: 30px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #0f172a;
+            border-radius: 999px;
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 4px 12px;
+            font-family: "Source Serif 4", Georgia, serif;
+            outline: none;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+        }
+
+        .study-task-select:focus {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+
+        .study-task-select:disabled {
+            opacity: 0.75;
+            cursor: not-allowed;
+        }
+
+        .study-task-meta {
+            color: #334155;
+            font-size: 0.85em;
+            line-height: 1.45;
+        }
+
+        .study-task-inline-meta {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #334155;
+            font-size: 0.85em;
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .study-task-inline-title {
+            color: #0f172a;
+            font-weight: 600;
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .study-task-inline-status {
+            color: #475569;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .study-login-modal {
+            width: min(760px, calc(100vw - 32px));
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .study-login-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            min-height: 340px;
+        }
+
+        .study-login-pane {
+            padding: 16px;
+            background: #ffffff;
+        }
+
+        .study-login-pane h3 {
+            margin-bottom: 6px;
+        }
+
+        .study-login-pane p {
+            font-size: 0.88em;
+            color: #475569;
+            margin-bottom: 8px;
+            line-height: 1.45;
+        }
+
+        .study-info-pane {
+            border-left: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .study-info-pane h3 {
+            margin-bottom: 0;
+            color: #1e293b;
+            font-family: "Source Serif 4", Georgia, serif;
+            font-weight: 600;
+        }
+
+        .study-info-card {
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 10px 12px;
+        }
+
+        .study-info-card-title {
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .study-info-card p, .study-info-card ul {
+            margin: 0;
+            color: #475569;
+            font-size: 0.86em;
+            line-height: 1.45;
+        }
+
+        .study-info-card ul {
+            padding-left: 16px;
+        }
+
+        .study-overlay-modal {
+            width: 380px;
+            border-radius: 14px;
+            box-shadow: 0 22px 48px rgba(15, 23, 42, 0.2);
+        }
+
+        .study-overlay-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .study-overlay-actions .btn-primary {
+            min-width: 210px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #e0efff 0%, #dbeafe 100%);
+            color: #1e3a8a;
+            border: 1px solid #bfdbfe;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.10);
+            font-family: "Source Serif 4", Georgia, serif;
+            font-weight: 600;
+            padding: 10px 16px;
+        }
+
+        .study-overlay-actions .btn-primary:hover {
+            background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);
+            box-shadow: 0 6px 14px rgba(59, 130, 246, 0.14);
+        }
+
+        .modal h3 {
+            margin-bottom: 8px;
+            font-size: 1em;
+            color: #0f172a;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .modal label {
+            display: block;
+            font-size: 0.85em;
+            color: #475569;
+            margin: 10px 0 6px;
+        }
+
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #cbd5f5;
+            border-radius: var(--radius);
+            font-size: 0.9em;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.08s ease, box-shadow 0.18s ease;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.16);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+        }
+
+        .modal-actions button:hover {
+            transform: translateY(-1px);
+        }
+
+        .modal-actions button:active {
+            transform: translateY(0);
+        }
+
+
+        .comparison-container {
+            display: flex;
+            height: 620px;
+            gap: 14px;
+            padding: 10px 12px 12px;
+            align-items: stretch;
+            flex-wrap: nowrap;
+            box-sizing: border-box;
+        }
+
+        .agent-panel {
+            flex: 1 1 60%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+            margin: 2px 0;
+        }
+
+        .flowchart-panel {
+            flex: 1 1 40%;
+            min-width: 360px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #eef7ff 0%, #f8fbff 18%, #ffffff 100%);
+            position: relative;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+            margin: 2px 0;
+        }
+
+        .agent-panel {
+            background: linear-gradient(180deg, #f4fcf6 0%, #fbfffc 18%, #ffffff 100%);
+        }
+
+        .agent-header {
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1em;
+            border-bottom: 1px solid #f1f5f9;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .baseline-header {
+            background: linear-gradient(90deg, #fef2f2 0%, #fee2e2 100%);
+            color: #dc2626;
+            border-bottom: 2px solid #fecaca;
+        }
+
+        .structured-header {
+            background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%);
+            color: #16a34a;
+            border-bottom: 1px solid #bbf7d0;
+        }
+
+        .flowchart-header {
+            background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 100%);
+            color: #0369a1;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1em;
+            border-bottom: 1px solid #bae6fd;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .workflow-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+
+        .workflow-switch-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #0f172a;
+            white-space: nowrap;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-height: 0; /* Ensure flex children can shrink */
+        }
+
+    /* Structured agent workflow status area */
+        .workflow-status {
+            background: linear-gradient(180deg, #fafafa 0%, #f8fafc 100%);
+            border-bottom: 1px solid #e2e8f0;
+            padding: 15px;
+            min-height: 100px;
+        }
+
+        .current-step {
+            background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 1em;
+            border: 1px solid #93c5fd;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .workflow-progress {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            padding: 6px 10px;
+            border-radius: var(--radius);
+            font-size: 0.85em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.completed {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .progress-step.current {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 3px rgba(59, 130, 246, 0.3); }
+            50% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
+        }
+
+        .progress-step.pending {
+            background: #f8fafc;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .conversation {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #fefefe;
+            max-height: calc(100vh - 400px); /* Ensure scrollable */
+        }
+
+        .message {
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 80%;
+            padding: 9px 12px;
+            border-radius: 14px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            border: 1px solid #dbe3ee;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+
+        .message.user .message-bubble {
+            background: #eef6ff;
+            color: #1e3a8a;
+            border-color: #bfdbfe;
+        }
+
+        .message.assistant .message-bubble {
+            background: #f0fdf4;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .input-area {
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 7px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius);
+            font-size: 0.9em;
+            outline: none;
+            transition: border-color 0.3s ease;
+            background: #fafafa;
+        }
+
+        .message-input:focus {
+            border-color: #cbd5e1;
+            background: white;
+            box-shadow: none;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus,
+        button:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .send-btn {
+            padding: 7px 14px;
+            background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9em;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .send-btn:hover {
+            background: linear-gradient(90deg, #bfdbfe 0%, #93c5fd 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .reset-btn {
+            padding: 8px 16px;
+            background: linear-gradient(90deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            border: 1px solid #f59e0b;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(90deg, #fde68a 0%, #fcd34d 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Flowchart styles */
+        .flowchart-content {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+
+        .flowchart-title {
+            font-size: 1em;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+            text-align: left;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+        /* Current state box */
+        .state-box {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: var(--radius);
+            padding: 10px 12px;
+            margin-bottom: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .state-box-left {
+            margin: 10px 12px 0 12px;
+        }
+        .state-box-title {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+            font-family: "Source Serif 4", Georgia, serif;
+        }
+        #state-display {
+            width: 220px ;
+            padding: 6px 8px;
+            border: 1px solid #f59e0b;
+            border-radius: var(--radius);
+            background: #fff7ed;
+            color: #92400e;
+            outline: none;
+            font-size: 0.9em;
+        }
+        #state-display:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .flowchart-node {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius);
+            padding: 15px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .flowchart-node.completed {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        }
+
+        .flowchart-node.current {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #3b82f6; }
+            50% { border-color: #60a5fa; }
+        }
+
+        .flowchart-node.pending {
+            border-color: #e2e8f0;
+            background: #fafafa;
+            opacity: 0.7;
+        }
+
+
+        .node-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .node-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .completed .node-number {
+            background: #22c55e;
+            color: white;
+        }
+
+        .current .node-number {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .pending .node-number {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .node-status {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: var(--radius);
+            font-weight: 500;
+        }
+
+        .completed .node-status {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .current .node-status {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .pending .node-status {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .node-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+            font-size: 0.95em;
+        }
+
+        .node-description {
+            font-size: 0.8em;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .flowchart-arrow {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 1.2em;
+            margin: -5px 0;
+        }
+
+        .flowchart-arrow.active {
+            color: #3b82f6;
+            animation: arrow-pulse 1.5s infinite;
+        }
+
+        @keyframes arrow-pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .legend {
+            background: #fafafa;
+            padding: 12px 25px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 0.85em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-icon {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .baseline-icon { background: #fca5a5; }
+        .structured-icon { background: #86efac; }
+        .flowchart-icon { background: #7dd3fc; }
+
+    /* Responsive design */
+        @media (max-width: 1200px) {
+            .comparison-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .flowchart-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 2px solid #e2e8f0;
+                min-height: 300px;
+            }
+
+            .agent-panel {
+                min-height: 400px;
+                border-right: none;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .workflow-progress {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .flowchart-content {
+                padding: 15px;
+            }
+
+            .flowchart-node {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .study-login-grid {
+                grid-template-columns: 1fr;
+            }
+            .study-info-pane {
+                border-left: none;
+                border-top: 1px solid #e2e8f0;
+            }
+        }
+
+    /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #60a5fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    /* Scrollbar styles */
+        .conversation::-webkit-scrollbar,
+        .flowchart-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .conversation::-webkit-scrollbar-track,
+        .flowchart-content::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 3px;
+        }
+
+        .conversation::-webkit-scrollbar-thumb,
+        .flowchart-content::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .conversation::-webkit-scrollbar-thumb:hover,
+        .flowchart-content::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="{{ 'study-title' if user_study_mode else '' }}">{{ 'UML User Study' if user_study_mode else '🤖 FlowGuard Conversation System Demo' }}</h1>
+            <p id="header-subtitle">{{ 'Left: structured task conversation | Right: live UML flowchart' if user_study_mode else 'Left: Structured agent (flowchart-driven) | Right: Live flowchart' }}</p>
+        </div>
+        <div class="auth-bar">
+            <button class="info-button" id="info-button" onclick="toggleInfo()">ℹ️ Info</button>
+            <div class="info-popover" id="info-popover">
+                {% if user_study_mode %}
+                <h4 id="info-title">Study Guide</h4>
+                <p id="info-line-1">Complete four tasks in order. Only one task is shown at a time.</p>
+                <p id="info-line-2">Left: task conversation and progress. Right: live UML flowchart.</p>
+                <p id="info-line-3">The next task starts automatically 10 seconds after completion.</p>
+                {% else %}
+                <h4 id="info-title">Interface Guide</h4>
+                <p id="info-line-1">Goal: demonstrate the linkage between structured dialogue and the flowchart.</p>
+                <p id="info-line-2">Left: structured chat panel showing the conversation and current state.</p>
+                <p id="info-line-3">Right: flowchart visualization with real-time path and state updates.</p>
+                <p id="info-line-4">You can click flowchart nodes to jump and focus.</p>
+                {% endif %}
+            </div>
+            <button class="auth-button" id="auth-button" onclick="openLoginModal()">🔐 Login</button>
+            <div class="auth-status" id="auth-status">Not logged in</div>
+        </div>
+        <div class="control-panel">
+            <button class="reset-btn" id="lang-toggle-btn" onclick="toggleLanguage()" style="margin-right:8px;">{{ '中文' if (default_ui_lang == 'en') else 'English' }}</button>
+            <button class="reset-btn" id="reset-btn" onclick="resetConversation()">🔄 Reset conversation</button>
+        </div>
+
+        <div class="comparison-container">
+            <!-- Baseline agent panel -->
+            <!-- <div class="agent-panel">
+                <div class="agent-header baseline-header">
+                    🤖 Baseline Agent (General LLM)
+                    <div style="font-size: 0.75em; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                        No flow constraints • May skip steps or drift
+                    </div>
+                </div>
+                <div class="chat-area">
+                    <div class="conversation" id="baseline-conversation">
+                        <div class="message assistant">
+                            <div class="message-bubble">
+                                Hello! I'm Assistant A. How can I help you?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-area">
+                        <div class="input-group">
+                            <input type="text" class="message-input" id="baseline-input" 
+                                   placeholder="Type your message..." 
+                                   onkeypress="handleKeyPress(event, 'baseline')">
+                            <button class="send-btn" onclick="sendMessage('baseline')">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+
+            <!-- Structured agent panel -->
+            <div class="agent-panel">
+                <div class="agent-header structured-header">
+                    <span id="structured-agent-title">🎯 Structured Agent (Flowchart-driven)</span>
+                    <div id="structured-agent-subtitle" style="font-size: 0.75em; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                        Strict flow constraints • Predictable path • Visible state
+                    </div>
+                </div>
+                <div class="state-box state-box-left">
+                    <div class="state-box-title" id="state-box-title">Current State</div>
+                    <input id="state-display" type="text" readonly />
+                </div>
+                {% if not user_study_mode %}
+                <div class="workflow-switch">
+                    <span class="workflow-switch-label" id="workflow-select-label">Workflow</span>
+                    <select id="workflow-select" class="study-task-select" onchange="onWorkflowSelected(this.value)" disabled>
+                        <option value="">Select a workflow</option>
+                    </select>
+                </div>
+                {% endif %}
+                {% if user_study_mode %}
+                <div class="study-task-card" id="study-task-card">
+                    <div class="study-task-row">
+                        <div class="study-task-label" id="study-task-progress-label">Task Progress</div>
+                        <select id="study-goal-select" class="study-task-select" onchange="onStudyGoalSelected(this.value)" disabled style="display:none;">
+                            <option value="">Select target node</option>
+                        </select>
+                        <div class="study-task-inline-meta">
+                            <span class="study-task-inline-title" id="study-task-title">Awaiting login</span>
+                            <span class="study-task-inline-status" id="study-task-status">Sign in to begin the study.</span>
+                        </div>
+                        <span class="study-task-badge" id="study-task-counter">Task 0 / 0</span>
+                    </div>
+                    <div class="study-task-row" style="margin-top:8px;">
+                        <div class="study-task-label" id="study-task-jump-label">Task Switch</div>
+                        <select id="study-task-select" class="study-task-select" onchange="onStudyTaskSelected(this.value)" disabled>
+                            <option value="">Select a task</option>
+                        </select>
+                    </div>
+                    <div class="study-task-meta" id="study-goal-hint" style="display:none;">Select a target node before answering.</div>
+                    <div class="study-task-meta" id="study-task-jump-hint">After each task completes, it still auto-advances. You can also jump to another task here.</div>
+                </div>
+                {% endif %}
+                <div class="chat-area">
+                    <div class="conversation" id="structured-conversation">
+                        <div class="message assistant">
+                            <div class="message-bubble" id="structured-welcome-message">
+                                {% if user_study_mode %}
+                                Sign in to begin the study. One UML task will be shown at a time.
+                                {% else %}
+                                {{ ui_texts_bundle[default_ui_lang]["demo_welcome"] }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="input-area">
+                        <div class="input-group">
+                            <input type="text" class="message-input" id="structured-input" 
+                                   placeholder="{{ ui_texts_bundle[default_ui_lang]['structured_input_study_placeholder' if user_study_mode else 'structured_input_default_placeholder'] }}" 
+                                   onkeypress="handleKeyPress(event, 'structured')">
+                            <button class="send-btn" onclick="sendMessage('structured')">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+    <!-- Flowchart panel -->
+        <div class="flowchart-panel">
+                <div class="flowchart-header">
+            <span id="flowchart-header-title">📊 Live Flowchart</span>
+                <div id="flowchart-header-subtitle" style="font-size: 0.75em; font-weight: normal; margin-top: 5px; opacity: 0.8;">
+                    Visualize states and paths
+                </div>
+            </div>
+            <div class="flowchart-content">
+                <div class="flowchart-title" id="flowchart-title">Taobao Goods Return Flowchart</div>
+                <!-- Cytoscape graph here -->
+                <div id="cy"></div>
+            </div>
+        </div>
+
+        <!-- <div class="legend">
+            <div class="legend-item">
+                <div class="legend-icon baseline-icon"></div>
+                <span>Baseline: No structural constraints, may be chaotic or skip steps</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon structured-icon"></div>
+                <span>Structured: Executes strictly by flow, states clearly visible</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-icon flowchart-icon"></div>
+                <span>Flowchart: Shows current state and subsequent path in real time</span>
+            </div>
+        </div> -->
+    </div>
+
+    <div class="modal-overlay" id="login-modal">
+        {% if user_study_mode %}
+        <div class="modal study-login-modal">
+            <div class="study-login-grid">
+                <div class="study-login-pane">
+                    <h3 id="study-login-title">Participant Login</h3>
+                    <p id="study-login-desc">Please enter the username and password provided by the researcher.</p>
+                    <label id="study-login-user-label">Username</label>
+                    <input id="login-username" type="text" value="" />
+                    <label id="study-login-pass-label">Password</label>
+                    <input id="login-password" type="password" value="" />
+                    <div id="study-login-error" style="color:#dc2626;font-size:0.85em;min-height:1.2em;margin-top:8px;"></div>
+                    <div class="modal-actions">
+                        <button class="btn-primary" id="study-login-submit-btn" onclick="login()">Sign In</button>
+                        <button class="btn-secondary" id="study-login-cancel-btn" onclick="closeLoginModal()">Cancel</button>
+                    </div>
+                </div>
+                <div class="study-info-pane">
+                    <h3 id="study-info-title">Info</h3>
+                    <div class="study-info-card">
+                        <div class="study-info-card-title" id="study-info-flow-title">Flow</div>
+                        <p id="study-info-flow-body">You will complete all configured UML tasks in sequence. Each task ends when any stop node is reached.</p>
+                    </div>
+                    <div class="study-info-card">
+                        <div class="study-info-card-title" id="study-info-timing-title">Timing</div>
+                        <p id="study-info-timing-body">After a task is completed, the next task starts automatically after 10 seconds.</p>
+                    </div>
+                    <div class="study-info-card">
+                        <div class="study-info-card-title" id="study-info-notes-title">Notes</div>
+                        <ul>
+                            <li id="study-info-note-1">Use the assigned account</li>
+                            <li id="study-info-note-2">Complete tasks in order</li>
+                            <li id="study-info-note-3">Interactions are recorded for the study</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="modal">
+            <h3 id="login-modal-title">Login</h3>
+            <label id="login-modal-user-label">Username</label>
+            <input id="login-username" type="text" value="guest" />
+            <label id="login-modal-pass-label">Password</label>
+            <input id="login-password" type="password" value="guest123" />
+            <div class="modal-actions">
+                <button class="btn-primary" id="login-modal-submit-btn" onclick="login()">Login</button>
+                <button class="btn-secondary" id="login-modal-cancel-btn" onclick="closeLoginModal()">Cancel</button>
+            </div>
+
+            <div id="admin-create-section" style="display:none; margin-top:16px;">
+                <h3>Create User (Admin)</h3>
+                <label>New Username</label>
+                <input id="new-username" type="text" />
+                <label>New Password</label>
+                <input id="new-password" type="password" />
+                <label>Role</label>
+                <select id="new-role">
+                    <option value="guest">guest</option>
+                    <option value="admin">admin</option>
+                </select>
+                <label>Attrs (JSON)</label>
+                <textarea id="new-attrs" rows="3">{}</textarea>
+                <div class="modal-actions">
+                    <button class="btn-primary" onclick="createUser()">Create</button>
+                    <button class="btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if user_study_mode %}
+    <div class="modal-overlay" id="study-task-complete-modal">
+        <div class="modal study-overlay-modal">
+            <h3 id="study-complete-title">Task Completed</h3>
+            <p id="study-complete-message">Next task starts in 10 seconds.</p>
+            <div class="study-overlay-actions">
+                <button class="btn-primary" id="study-next-task-btn" type="button" onclick="studySkipToNextTask()">Go To Next Task</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="study-final-modal">
+        <div class="modal study-overlay-modal">
+            <h3 id="study-final-title">Thank you for participating</h3>
+            <p id="study-final-body">All tasks are completed. You may close this page.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <script>
+    let authToken = null;
+    let authUsername = null;
+    let csrfToken = null;
+    let conversationId = null;
+    let availableWorkflows = {};
+    const STUDY_MODE = {{ (user_study_mode if user_study_mode is defined else false) | tojson }};
+    const UI_TEXTS = {{ ui_texts_bundle | tojson }};
+    let currentLang = localStorage.getItem("flowguard_ui_lang") || {{ default_ui_lang | tojson }};
+    const AUTO_LOGIN = STUDY_MODE ? false : true;
+    let studyTasks = [];
+    let studyTaskIndex = 0;
+    let studyTaskAdvancing = false;
+    let studyTaskCountdownTimer = null;
+    let studyTaskDelayTimer = null;
+    let studyCompletedTaskKeys = new Set();
+    let studyGoalSelectedValue = "";
+    let studyGoalSelectionRequired = false;
+    let studyGoalOptions = [];
+
+    function getNonce() {
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        return btoa(String.fromCharCode(...bytes)).replace(/=+$/g, "");
+    }
+
+    function apiFetch(url, options = {}) {
+        const headers = options.headers || {};
+        headers["X-UI-Lang"] = currentLang;
+        if (STUDY_MODE) {
+            headers["X-Study-Mode"] = "1";
+        }
+        if (authToken) {
+            headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+        if (options.method && options.method.toUpperCase() !== "GET") {
+            headers["X-Request-Nonce"] = getNonce();
+            headers["X-Request-Timestamp"] = Math.floor(Date.now() / 1000).toString();
+        }
+        options.headers = headers;
+        return fetch(url, options);
+    }
+
+    function t(key, vars = {}) {
+        const dict = UI_TEXTS[currentLang] || UI_TEXTS.en || {};
+        let text = dict[key] || (UI_TEXTS.en && UI_TEXTS.en[key]) || key;
+        for (const [k, v] of Object.entries(vars)) {
+            text = String(text).split(`{${k}}`).join(String(v));
+        }
+        return text;
+    }
+
+    function setText(id, key, vars = {}) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = t(key, vars);
+    }
+
+    function getClientTz() {
+        try {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+        } catch (_) {
+            return "";
+        }
+    }
+
+    function buildClientMeta() {
+        return {
+            lang: navigator.language || "",
+            screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+            viewport: `${window.innerWidth || 0}x${window.innerHeight || 0}`,
+            user_agent: navigator.userAgent || ""
+        };
+    }
+
+    function applyLanguage() {
+        document.title = STUDY_MODE ? t("study_page_title") : t("page_title");
+        const titleEl = document.querySelector(".header h1");
+        if (titleEl) titleEl.textContent = STUDY_MODE ? t("study_page_title") : t("page_title");
+        setText("header-subtitle", STUDY_MODE ? "header_study_subtitle" : "header_demo_subtitle");
+        setText("info-button", "info_button");
+        setText("info-title", STUDY_MODE ? "info_title_study" : "info_title_demo");
+        setText("info-line-1", STUDY_MODE ? "info_study_1" : "info_demo_1");
+        setText("info-line-2", STUDY_MODE ? "info_study_2" : "info_demo_2");
+        setText("info-line-3", STUDY_MODE ? "info_study_3" : "info_demo_3");
+        if (!STUDY_MODE) setText("info-line-4", "info_demo_4");
+        setText("reset-btn", "reset_button");
+        const langBtn = document.getElementById("lang-toggle-btn");
+        if (langBtn) langBtn.textContent = currentLang === "en" ? t("translate_button_zh") : t("translate_button_en");
+        const authBtn = document.getElementById("auth-button");
+        if (authBtn && !authToken) authBtn.textContent = `🔐 ${t("login_button")}`;
+        const authStatusEl = document.getElementById("auth-status");
+        if (authStatusEl) {
+            if (authToken && authUsername) {
+                authStatusEl.textContent = t("logged_in_as", { username: authUsername });
+            } else if (!authToken) {
+                authStatusEl.textContent = t("not_logged_in");
+            }
+        }
+        setText("structured-agent-title", "structured_agent_title");
+        setText("structured-agent-subtitle", "structured_agent_subtitle");
+        setText("state-box-title", "current_state");
+        setText("flowchart-header-title", "flowchart_panel_title");
+        setText("flowchart-header-subtitle", "flowchart_panel_subtitle");
+        setText("workflow-select-label", "workflow_select_label");
+        if (!STUDY_MODE) {
+            const defaultTitle = document.getElementById("flowchart-title");
+            if (defaultTitle && !defaultTitle.dataset.taskDriven) {
+                defaultTitle.textContent = t("default_flowchart_title");
+            }
+        }
+        populateWorkflowSelect(availableWorkflows, null);
+        const sendBtn = document.querySelector(".send-btn");
+        if (sendBtn && !isLoading) sendBtn.textContent = t("send_button");
+        const structuredInput = document.getElementById("structured-input");
+        if (structuredInput) {
+            if (!structuredInput.disabled) {
+                structuredInput.placeholder = STUDY_MODE ? t("structured_input_active_placeholder") : t("structured_input_default_placeholder");
+            } else if (STUDY_MODE && !authToken) {
+                structuredInput.placeholder = t("structured_input_study_placeholder");
+            }
+        }
+
+        if (STUDY_MODE) {
+            setText("study-task-progress-label", "task_progress");
+            setText("study-task-jump-label", "study_task_jump_label");
+            setText("study-task-jump-hint", "study_task_jump_hint");
+            const goalSelect = document.getElementById("study-goal-select");
+            if (goalSelect) {
+                const placeholder = t("task_target_select_placeholder");
+                if (goalSelect.options.length) {
+                    goalSelect.options[0].textContent = placeholder;
+                } else {
+                    const opt = document.createElement("option");
+                    opt.value = "";
+                    opt.textContent = placeholder;
+                    goalSelect.appendChild(opt);
+                }
+            }
+            setText("study-goal-hint", studyGoalSelectedValue ? "task_target_select_hint_ready" : "task_target_select_hint_pending", studyGoalSelectedValue ? { goal: studyGoalSelectedValue } : {});
+            if (!authToken) {
+                setText("study-task-title", "task_awaiting_login");
+                setText("study-task-status", "task_signin_hint");
+            }
+            const welcome = document.getElementById("structured-welcome-message");
+            if (welcome && !authToken) welcome.textContent = t("study_welcome");
+            setText("study-login-title", "study_login_title");
+            setText("study-login-desc", "study_login_desc");
+            setText("study-login-user-label", "login_modal_user");
+            setText("study-login-pass-label", "login_modal_pass");
+            setText("study-login-submit-btn", "study_login_submit");
+            setText("study-login-cancel-btn", "login_modal_cancel");
+            setText("study-info-title", "study_info_title");
+            setText("study-info-flow-title", "study_info_flow_title");
+            setText("study-info-flow-body", "study_info_flow_body");
+            setText("study-info-timing-title", "study_info_timing_title");
+            setText("study-info-timing-body", "study_info_timing_body");
+            setText("study-info-notes-title", "study_info_notes_title");
+            setText("study-info-note-1", "study_info_notes_1");
+            setText("study-info-note-2", "study_info_notes_2");
+            setText("study-info-note-3", "study_info_notes_3");
+            setText("study-next-task-btn", "study_next_task_button");
+            setText("study-final-title", "study_done_title");
+            setText("study-final-body", "study_done_body");
+        } else {
+            const welcome = document.getElementById("structured-welcome-message");
+            if (welcome) welcome.textContent = t("demo_welcome");
+            setText("login-modal-title", "login_modal_title");
+            setText("login-modal-user-label", "login_modal_user");
+            setText("login-modal-pass-label", "login_modal_pass");
+            setText("login-modal-submit-btn", "login_modal_submit");
+            setText("login-modal-cancel-btn", "login_modal_cancel");
+        }
+    }
+
+    async function toggleLanguage() {
+        currentLang = currentLang === "en" ? "zh" : "en";
+        localStorage.setItem("flowguard_ui_lang", currentLang);
+        applyLanguage();
+        if (!authToken) return;
+        if (STUDY_MODE) {
+            if (studyTasks.length) {
+                await loadStudyTasks();
+            }
+        } else {
+            await loadWorkflowData();
+        }
+    }
+
+    function setAuthStatus(text, username = null) {
+        document.getElementById("auth-status").textContent = text;
+        const btn = document.getElementById("auth-button");
+        const studyTaskSelect = document.getElementById("study-task-select");
+        if (username !== null) {
+            authUsername = username || null;
+        } else if (!authToken) {
+            authUsername = null;
+        }
+        const displayUsername = username !== null ? (username || null) : (authToken ? authUsername : null);
+        if (displayUsername) {
+            btn.textContent = `👤 ${displayUsername}`;
+        } else {
+            btn.textContent = `🔐 ${t("login_button")}`;
+        }
+        if (studyTaskSelect) {
+            studyTaskSelect.disabled = !displayUsername || !studyTasks.length;
+        }
+    }
+
+    function setStudyLoginError(text) {
+        const el = document.getElementById("study-login-error");
+        if (el) el.textContent = text || "";
+    }
+
+    function openLoginModal() {
+        document.getElementById("login-modal").style.display = "flex";
+    }
+
+    function closeLoginModal() {
+        document.getElementById("login-modal").style.display = "none";
+    }
+
+    function toggleInfo() {
+        const popover = document.getElementById("info-popover");
+        popover.classList.toggle("open");
+    }
+
+    document.addEventListener("click", (event) => {
+        const popover = document.getElementById("info-popover");
+        const button = document.getElementById("info-button");
+        if (!popover.contains(event.target) && event.target !== button) {
+            popover.classList.remove("open");
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            document.getElementById("info-popover").classList.remove("open");
+        }
+    });
+
+    async function login() {
+        const username = document.getElementById("login-username").value.trim();
+        const password = document.getElementById("login-password").value.trim();
+        const resp = await apiFetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await resp.json();
+        if (!data.success) {
+            setStudyLoginError(t("login_failed", { error: data.error }));
+            setAuthStatus(t("login_failed", { error: data.error }));
+            return;
+        }
+        setStudyLoginError("");
+        authToken = data.token;
+        csrfToken = data.csrf_token;
+        conversationId = data.conversation_id;
+        setAuthStatus(t("logged_in_as", { username: data.user.username }), data.user.username);
+        const adminCreateSection = document.getElementById("admin-create-section");
+        if (adminCreateSection) {
+            adminCreateSection.style.display = data.user.username === "admin" ? "block" : "none";
+        }
+        closeLoginModal();
+        if (STUDY_MODE) {
+            await loadStudyTasks();
+        } else {
+            await loadWorkflowData();
+        }
+    }
+
+    async function logout() {
+        if (!authToken) {
+            setAuthStatus(t("not_logged_in"));
+            return;
+        }
+        await apiFetch("/api/logout", { method: "POST" });
+        authToken = null;
+        csrfToken = null;
+        conversationId = null;
+        setAuthStatus(t("not_logged_in"));
+        const adminCreateSection = document.getElementById("admin-create-section");
+        if (adminCreateSection) {
+            adminCreateSection.style.display = "none";
+        }
+    }
+
+    async function createUser() {
+        const username = document.getElementById("new-username").value.trim();
+        const password = document.getElementById("new-password").value.trim();
+        const role = document.getElementById("new-role").value;
+        let attrs = {};
+        try {
+            attrs = JSON.parse(document.getElementById("new-attrs").value || "{}");
+        } catch (e) {
+            setAuthStatus("Attrs must be valid JSON");
+            return;
+        }
+
+        const resp = await apiFetch("/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password, role, attrs })
+        });
+        const data = await resp.json();
+        if (!data.success) {
+            setAuthStatus(`Create user failed: ${data.error}`);
+            return;
+        }
+        setAuthStatus(`User created: ${username}`);
+        document.getElementById("new-username").value = "";
+        document.getElementById("new-password").value = "";
+        document.getElementById("new-attrs").value = "{}";
+    }
+
+
+    async function loadWorkflowData() {
+        const resp = await apiFetch("/api/workflow_data?reset=1");
+        const data = await resp.json();
+        if (!data.success) {
+            setAuthStatus(t("load_failed", { error: data.error }));
+            return;
+        }
+        conversationId = data.conversation_id;
+        document.getElementById("state-display").value = data.current_state;
+        const flowchartTitle = document.getElementById("flowchart-title");
+        if (flowchartTitle && data.examples && data.current_example_key && data.examples[data.current_example_key]) {
+            flowchartTitle.textContent = data.examples[data.current_example_key].name || t("default_flowchart_title");
+            delete flowchartTitle.dataset.taskDriven;
+        }
+        availableWorkflows = data.examples || {};
+        populateWorkflowSelect(availableWorkflows, data.current_example_key || null);
+        loadGraph();
+    }
+
+    function populateWorkflowSelect(examples, currentKey) {
+        const select = document.getElementById("workflow-select");
+        if (!select) return;
+        const keys = Object.keys(examples || {});
+        select.innerHTML = "";
+        if (!keys.length) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = t("workflow_select_empty");
+            select.appendChild(opt);
+            select.disabled = true;
+            return;
+        }
+        keys.sort((a, b) => {
+            const nameA = String(examples[a]?.name || a);
+            const nameB = String(examples[b]?.name || b);
+            return nameA.localeCompare(nameB, currentLang === "zh" ? "zh-CN" : "en");
+        });
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = t("workflow_select_placeholder");
+        select.appendChild(placeholder);
+        for (const key of keys) {
+            const opt = document.createElement("option");
+            opt.value = key;
+            opt.textContent = examples[key]?.name || key;
+            select.appendChild(opt);
+        }
+        select.disabled = false;
+        select.value = currentKey && keys.includes(currentKey) ? currentKey : "";
+    }
+
+    async function onWorkflowSelected(value) {
+        const key = String(value || "").trim();
+        if (!key) return;
+        const resp = await apiFetch(`/api/switch_example/${encodeURIComponent(key)}`);
+        const data = await resp.json();
+        if (!data.success) {
+            setAuthStatus(t("load_failed", { error: data.error || "switch failed" }));
+            return;
+        }
+        await loadWorkflowData();
+    }
+
+    function isStopStateValue(v) {
+        const s = String(v || "").toLowerCase();
+        return s === "stop" || s === "<end>" || s === "end";
+    }
+
+    function updateStudyTaskCard(title, statusText) {
+        if (!STUDY_MODE) return;
+        const total = studyTasks.length;
+        const shown = total ? Math.min(studyTaskIndex + 1, total) : 0;
+        const counter = document.getElementById("study-task-counter");
+        const titleEl = document.getElementById("study-task-title");
+        const statusEl = document.getElementById("study-task-status");
+        if (counter) counter.textContent = currentLang === "zh" ? `任务 ${shown} / ${total}` : `Task ${shown} / ${total}`;
+        if (titleEl && title != null) titleEl.textContent = title;
+        if (statusEl && statusText != null) statusEl.textContent = statusText;
+    }
+
+    function populateStudyTaskSelect() {
+        if (!STUDY_MODE) return;
+        const select = document.getElementById("study-task-select");
+        if (!select) return;
+        select.innerHTML = "";
+        if (!studyTasks.length) {
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = currentLang === "zh" ? "暂无任务" : "No tasks";
+            select.appendChild(opt);
+            select.disabled = true;
+            return;
+        }
+        for (let i = 0; i < studyTasks.length; i += 1) {
+            const task = studyTasks[i];
+            const opt = document.createElement("option");
+            opt.value = String(i);
+            opt.textContent = task.title || (currentLang === "zh" ? `任务 ${i + 1}` : `Task ${i + 1}`);
+            select.appendChild(opt);
+        }
+        select.disabled = !authToken;
+        select.value = String(Math.min(studyTaskIndex, studyTasks.length - 1));
+    }
+
+    function clearStudyTaskAdvanceTimers() {
+        clearInterval(studyTaskCountdownTimer);
+        studyTaskCountdownTimer = null;
+        clearTimeout(studyTaskDelayTimer);
+        studyTaskDelayTimer = null;
+        const completeModal = document.getElementById("study-task-complete-modal");
+        if (completeModal) completeModal.style.display = "none";
+    }
+
+    function resetStudyGoalSelectionUI() {
+        if (!STUDY_MODE) return;
+        studyGoalSelectedValue = "";
+        studyGoalSelectionRequired = false;
+        studyGoalOptions = [];
+        const select = document.getElementById("study-goal-select");
+        if (select) {
+            select.innerHTML = "";
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = t("task_target_select_placeholder");
+            select.appendChild(opt);
+            select.value = "";
+            select.disabled = true;
+        }
+        const hint = document.getElementById("study-goal-hint");
+        if (hint) hint.textContent = t("task_target_select_hint_pending");
+    }
+
+    function populateStudyGoalOptionsFromGraphData(graphData) {
+        if (!STUDY_MODE) return;
+        const select = document.getElementById("study-goal-select");
+        if (!select) return;
+
+        const nodesMap = (graphData && graphData.nodes) || {};
+        const edges = Array.isArray(graphData?.edges) ? graphData.edges : [];
+        const stopNodeIds = new Set(
+            Object.entries(nodesMap)
+                .filter(([, info]) => String(info?.type || "") === "stop")
+                .map(([id]) => String(id))
+        );
+        const predecessorIds = new Set();
+        for (const e of edges) {
+            const fromId = String(e?.from ?? "");
+            const toId = String(e?.to ?? "");
+            if (fromId && toId && stopNodeIds.has(toId)) {
+                predecessorIds.add(fromId);
+            }
+        }
+
+        const seen = new Set();
+        const options = [];
+        for (const nodeId of predecessorIds) {
+            const info = nodesMap[nodeId];
+            const label = String(info?.label || "").trim();
+            const type = String(info?.type || "");
+            if (!label || label === "<start>" || label.toLowerCase() === "start") continue;
+            const key = `${label}__${type}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            options.push({ id: nodeId, label, type });
+        }
+        options.sort((a, b) => {
+            return a.label.localeCompare(b.label, currentLang === "zh" ? "zh-CN" : "en");
+        });
+
+        studyGoalOptions = options;
+        const placeholder = t("task_target_select_placeholder");
+        select.innerHTML = "";
+        const placeholderOpt = document.createElement("option");
+        placeholderOpt.value = "";
+        placeholderOpt.textContent = placeholder;
+        select.appendChild(placeholderOpt);
+        for (const item of options) {
+            const opt = document.createElement("option");
+            opt.value = item.label;
+            opt.textContent = item.type === "stop" ? `${item.label} (stop)` : item.label;
+            opt.dataset.nodeId = item.id;
+            opt.dataset.nodeType = item.type;
+            select.appendChild(opt);
+        }
+        select.disabled = false;
+    }
+
+    async function onStudyGoalSelected(value) {
+        if (!STUDY_MODE) return;
+        studyGoalSelectedValue = String(value || "").trim();
+        const hint = document.getElementById("study-goal-hint");
+        if (hint) {
+            hint.textContent = studyGoalSelectedValue
+                ? t("task_target_select_hint_ready", { goal: studyGoalSelectedValue })
+                : t("task_target_select_hint_pending");
+        }
+        setStructuredInputEnabled(!!studyGoalSelectedValue);
+        if (!studyGoalSelectedValue) return;
+        try {
+            const select = document.getElementById("study-goal-select");
+            const selectedOption = select ? select.options[select.selectedIndex] : null;
+            await apiFetch("/api/task_event", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    event: "goal_selected",
+                    task_key: studyTasks[studyTaskIndex]?.key,
+                    task_index: studyTaskIndex,
+                    details: {
+                        goal_state_id: studyGoalSelectedValue,
+                        node_id: selectedOption?.dataset?.nodeId || null,
+                        node_type: selectedOption?.dataset?.nodeType || null
+                    }
+                })
+            });
+        } catch (_) {}
+    }
+
+    function setStructuredInputEnabled(enabled) {
+        const input = document.getElementById("structured-input");
+        const btn = document.querySelector(".send-btn");
+        if (input) input.disabled = !enabled;
+        if (btn) btn.disabled = !enabled;
+        if (input && !enabled && STUDY_MODE && !authToken) {
+            input.placeholder = t("structured_input_study_placeholder");
+        } else if (input && !enabled && STUDY_MODE && authToken && studyGoalSelectionRequired && !studyGoalSelectedValue) {
+            input.placeholder = t("task_target_select_hint_missing");
+        }
+    }
+
+    function resetStructuredConversationForTask(taskTitle) {
+        const structuredConv = document.getElementById("structured-conversation");
+        if (!structuredConv) return;
+        structuredConv.innerHTML = `
+            <div class="message assistant">
+                <div class="message-bubble">
+                    ${t("study_task_loaded_prefix")}: ${taskTitle}. ${t("study_task_loaded_suffix")}
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadStudyTasks() {
+        updateStudyTaskCard(t("study_task_loading"), t("study_task_wait"));
+        setStructuredInputEnabled(false);
+        const resp = await apiFetch("/api/user_test_tasks");
+        const data = await resp.json();
+        if (!data.success) {
+            updateStudyTaskCard(t("study_task_loading"), t("task_list_failed", { error: data.error }));
+            setAuthStatus(t("task_list_failed", { error: data.error }));
+            return;
+        }
+        studyTasks = data.tasks || [];
+        studyTaskIndex = 0;
+        studyCompletedTaskKeys = new Set();
+        populateStudyTaskSelect();
+        if (!studyTasks.length) {
+            updateStudyTaskCard(t("study_no_tasks"), t("study_no_tasks_desc"));
+            return;
+        }
+        await startStudyTask(studyTaskIndex);
+    }
+
+    async function startStudyTask(index, options = {}) {
+        if (!STUDY_MODE) return;
+        const task = studyTasks[index];
+        if (!task) return;
+        studyTaskIndex = index;
+        studyTaskAdvancing = false;
+        clearStudyTaskAdvanceTimers();
+        resetStudyGoalSelectionUI();
+        populateStudyTaskSelect();
+        updateStudyTaskCard(task.title || `Task ${index + 1}`, t("study_task_loading_uml"));
+        setStructuredInputEnabled(false);
+
+        const flowchartTitle = document.querySelector(".flowchart-title");
+        if (flowchartTitle) {
+            flowchartTitle.textContent = task.title || `Task ${index + 1}`;
+            flowchartTitle.dataset.taskDriven = "1";
+        }
+
+        const resp = await apiFetch(`/api/user_test_tasks/${encodeURIComponent(task.key)}/start`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                task_index: index,
+                total_tasks: studyTasks.length,
+                client_tz: getClientTz(),
+                client_meta: buildClientMeta()
+            })
+        });
+        const data = await resp.json();
+        if (!data.success) {
+            updateStudyTaskCard(task.title || `Task ${index + 1}`, t("task_start_failed_inline", { error: data.error }));
+            setAuthStatus(t("task_start_failed", { error: data.error }));
+            return;
+        }
+
+        conversationId = data.conversation_id;
+        document.getElementById("state-display").value = data.current_state || "<start>";
+        resetStructuredConversationForTask(task.title || `Task ${index + 1}`);
+        loadGraph();
+        setStructuredInputEnabled(true);
+        const input = document.getElementById("structured-input");
+        if (input) {
+            input.placeholder = t("structured_input_active_placeholder");
+            input.focus();
+        }
+        updateStudyTaskCard(task.title || `Task ${index + 1}`, t("study_task_in_progress"));
+        if (options.manualSwitch) {
+            try {
+                await apiFetch("/api/task_event", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        event: "task_selected_from_dropdown",
+                        task_key: task.key,
+                        task_index: index,
+                        details: { title: task.title || "" }
+                    })
+                });
+            } catch (_) {}
+        }
+    }
+
+    async function handleStudyTaskCompleted() {
+        if (!STUDY_MODE || studyTaskAdvancing) return;
+        studyTaskAdvancing = true;
+        if (studyTasks[studyTaskIndex]?.key) {
+            studyCompletedTaskKeys.add(studyTasks[studyTaskIndex].key);
+        }
+        setStructuredInputEnabled(false);
+        const taskNo = studyTaskIndex + 1;
+        updateStudyTaskCard(studyTasks[studyTaskIndex]?.title || `Task ${taskNo}`, t("study_task_complete_title", { n: taskNo }));
+
+        const completeModal = document.getElementById("study-task-complete-modal");
+        const finalModal = document.getElementById("study-final-modal");
+        const titleEl = document.getElementById("study-complete-title");
+        const msgEl = document.getElementById("study-complete-message");
+        let seconds = 10;
+
+        if (titleEl) titleEl.textContent = t("study_task_complete_title", { n: taskNo });
+        if (msgEl) msgEl.textContent = t("study_task_complete_wait", { n: seconds });
+        if (completeModal) completeModal.style.display = "flex";
+
+        try {
+            await apiFetch("/api/task_event", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ event: "task_completed", task_key: studyTasks[studyTaskIndex]?.key, task_index: studyTaskIndex })
+            });
+        } catch (_) {}
+
+        clearInterval(studyTaskCountdownTimer);
+        clearTimeout(studyTaskDelayTimer);
+        studyTaskCountdownTimer = setInterval(() => {
+            seconds -= 1;
+            if (msgEl) msgEl.textContent = t("study_task_complete_wait", { n: Math.max(seconds, 0) });
+            if (seconds <= 0) {
+                clearInterval(studyTaskCountdownTimer);
+                studyTaskCountdownTimer = null;
+            }
+        }, 1000);
+
+        studyTaskDelayTimer = setTimeout(async () => {
+            await studyAdvanceToNextTask();
+        }, 10000);
+    }
+
+    async function studyAdvanceToNextTask() {
+        if (!STUDY_MODE) return;
+        clearInterval(studyTaskCountdownTimer);
+        studyTaskCountdownTimer = null;
+        clearTimeout(studyTaskDelayTimer);
+        studyTaskDelayTimer = null;
+
+        const completeModal = document.getElementById("study-task-complete-modal");
+        const finalModal = document.getElementById("study-final-modal");
+        if (completeModal) completeModal.style.display = "none";
+
+        studyTaskIndex += 1;
+        if (studyTaskIndex >= studyTasks.length) {
+            updateStudyTaskCard(t("study_all_done_card_title"), t("study_all_done_card_status"));
+            if (finalModal) finalModal.style.display = "flex";
+            try {
+                await apiFetch("/api/task_event", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ event: "study_completed", task_index: studyTaskIndex })
+                });
+            } catch (_) {}
+            return;
+        }
+        await startStudyTask(studyTaskIndex);
+    }
+
+    function studySkipToNextTask() {
+        if (!STUDY_MODE || !studyTaskAdvancing) return;
+        studyAdvanceToNextTask();
+    }
+
+    async function onStudyTaskSelected(value) {
+        if (!STUDY_MODE) return;
+        const idx = parseInt(String(value), 10);
+        if (Number.isNaN(idx) || idx < 0 || idx >= studyTasks.length) return;
+        await startStudyTask(idx, { manualSwitch: true });
+    }
+
+    function loadGraph() {
+    apiFetch("/graph")
+  .then(r => r.json())
+  .then(data => {
+    if (STUDY_MODE) {
+        populateStudyGoalOptionsFromGraphData(data);
+    }
+    const elements = [];
+    const idToLabel = {};
+
+    // Convert nodes
+    for (const [id, info] of Object.entries(data.nodes)) {
+            idToLabel[id] = info.label;
+      elements.push({
+        data: { id: id, label: info.label, type: info.type }
+      });
+    }
+
+    // Convert edges
+    for (const e of data.edges) {
+      elements.push({
+        data: { source: e.from, target: e.to, label: e.label }
+      });
+    }
+    cytoscape.use(cytoscapeElk);
+    cytoscape.use(cytoscapeDagre);
+
+    const cy = cytoscape({
+    container: document.getElementById('cy'),
+    elements: elements,
+    style: [
+                // Base node style (align with page theme)
+                {
+                    selector: 'node',
+                    style: {
+                        'label': 'data(label)',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'color': '#1e293b',
+                        'font-size': 16,
+                        'text-wrap': 'wrap',
+                        'text-max-width': 140,
+                        'background-color': '#f8fafc',          // slate-50 as base color
+                        'shape': 'round-rectangle',
+                        'padding': '16px',
+                        'width': 'label',
+                        'height': 'label',
+                        'border-width': 2,
+                        'border-color': '#e2e8f0',              // slate-200
+                        'shadow-blur': 6,
+                        'shadow-color': 'rgba(2, 132, 199, 0.10)', // cyan-600@0.1
+                        'shadow-opacity': 1,
+                        'shadow-offset-x': 0,
+                        'shadow-offset-y': 2,
+                        'transition-property': 'background-color, border-color, line-color, color, width, height, padding',
+                        'transition-duration': '200ms'
+                    }
+                },
+                // Typed nodes (consistent with color palette)
+                { selector: "node[type = 'start']", style: { 'background-color': '#ecfdf5', 'border-color': '#22c55e' } }, // green
+                { selector: "node[type = 'stop']",  style: { 'background-color': '#fef2f2', 'border-color': '#ef4444' } }, // red
+                { selector: "node[type = 'decision']", style: { 'background-color': '#fffbeb', 'border-color': '#f59e0b', 'shape': 'diamond' } }, // orange
+                { selector: "node[type = 'action']", style: { 'background-color': '#eff6ff', 'border-color': '#93c5fd' } }, // blue
+
+                // Node active/selected state
+                { selector: 'node.active', style: { 'border-color': '#3b82f6', 'border-width': 3, 'background-color': '#dbeafe', 'z-index-compare': 'manual', 'z-index': 9999 } },
+                { selector: 'node:selected', style: { 'border-color': '#2563eb', 'border-width': 3, 'background-color': '#bfdbfe' } },
+
+                // Base edge style
+                {
+                    selector: 'edge',
+                    style: {
+                        'label': 'data(label)',
+                        'font-size': 12,
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'vee',
+                        'arrow-scale': 1,
+                        'line-color': '#94a3b8',       // slate-400
+                        'target-arrow-color': '#94a3b8',
+                        'width': 2,
+                        'opacity': 0.9,
+                        'text-background-color': '#ffffff',
+                        'text-background-opacity': 0.75,
+                        'text-background-padding': 2,
+                        'text-rotation': 'autorotate',
+                        'control-point-step-size': 40,
+                        'source-distance-from-node': 1,
+                        'target-distance-from-node': 1
+                    }
+                },
+            // Highlighted edges
+            { selector: 'edge.highlighted', style: { 'line-color': '#3b82f6', 'target-arrow-color': '#3b82f6', 'width': 3, 'opacity': 1 } },
+            // Hover state (slight emphasis)
+            { selector: 'node.hover', style: { 'border-color': '#60a5fa' } }
+    ],
+        layout: {
+        name: 'dagre',
+    rankDir: 'TB',   // Layout direction: TB, LR, BT, RL
+    nodeSep: 20,     // Node gap
+    edgeSep: 30,     // Edge gap
+    rankSep: 20,     // Rank gap
+    padding: 8
+        }
+    });
+
+    // Expose to global for reset/update operations
+    window.cy = cy;
+    cy.userZoomingEnabled(false);
+    cy.zoomingEnabled(false);
+
+    // Dummy DFS path implementation - using exact labels from PlantUML
+    const dfsPath = [
+        'start',
+        'Customer requests a return',
+        'Customer service confirms the reason',
+        'Responsible party?',
+        'Log in to My Taobao\\nClick Return',
+        'Arrange courier pickup\\nor ship the item back',
+        'Is the item undamaged?',
+        'Return accepted',
+        'Refund',
+        'stop'
+    ];
+    
+    const nodeResponses = {
+        'start': 'Welcome! How can I help you today?',
+        'Customer requests a return': 'I understand you want to return an item. Let me help you with that.',
+        'Customer service confirms the reason': 'Could you please tell me the reason for the return?',
+        'Responsible party?': 'Let me check who is responsible for this return...',
+        'Log in to My Taobao\\nClick Return': 'Please log in to your Taobao account and click on the Return option.',
+        'Arrange courier pickup\\nor ship the item back': 'You can arrange for courier pickup or ship the item back yourself.',
+        'Is the item undamaged?': 'Let me check if the item is undamaged...',
+        'Return accepted': 'Great! Your return has been accepted.',
+        'Refund': 'Your refund is being processed and will be completed shortly.',
+        'stop': 'Thank you for using our return service. Have a great day!'
+    };
+    
+    let currentPathIndex = 0;
+    let isBacktracking = false;
+    
+    // Helper to find node by label
+    function findNodeByLabel(label) {
+        const nodes = cy.nodes().filter(n => n.data('label') === label);
+        console.log('Looking for node with label:', label, 'Found:', nodes.length);
+        if (nodes.length === 0) {
+            // Debug: print all available node labels
+            console.log('Available node labels:');
+            cy.nodes().forEach(n => console.log(' -', n.data('label')));
+        }
+        return nodes;
+    }
+    
+    // Helper to advance to next state in DFS path
+    function advanceToNextState() {
+        if (currentPathIndex < dfsPath.length - 1) {
+            currentPathIndex++;
+            const nextLabel = dfsPath[currentPathIndex];
+            const nextNode = findNodeByLabel(nextLabel);
+            if (!nextNode.empty()) {
+                setActive(nextNode);
+                return nodeResponses[nextLabel] || 'Moving to next step...';
+            } else {
+                // If node not found, try without escaped newlines
+                const unescapedLabel = nextLabel.replace(/\\n/g, '\n');
+                const unescapedNode = findNodeByLabel(unescapedLabel);
+                if (!unescapedNode.empty()) {
+                    setActive(unescapedNode);
+                    return nodeResponses[nextLabel] || nodeResponses[unescapedLabel] || 'Moving to next step...';
+                }
+                console.log('Node not found:', nextLabel, 'or', unescapedLabel);
+            }
+        }
+        return 'We have reached the end of the process.';
+    }
+    
+    // Helper to handle backtracking
+    function handleBacktrack(targetLabel) {
+        const targetIndex = dfsPath.indexOf(targetLabel);
+        if (targetIndex >= 0 && targetIndex < currentPathIndex) {
+            currentPathIndex = targetIndex;
+            isBacktracking = true;
+            return `Backtracking... ${nodeResponses[targetLabel] || 'Returning to this step.'}`;
+        }
+        return nodeResponses[targetLabel] || 'Current state information.';
+    }
+    
+    // Expose global functions
+    window.advanceToNextState = advanceToNextState;
+    window.handleBacktrack = handleBacktrack;
+    window.getCurrentPathIndex = () => currentPathIndex;
+    window.getDfsPath = () => dfsPath;
+
+    // Helper to set current state display
+    function setStateDisplayByNode(node) {
+        const input = document.getElementById('state-display');
+        if (!input) return;
+        if (!node || node.empty()) {
+            input.value = '';
+        } else {
+            input.value = node.data('label') || '';
+        }
+    }
+
+    async function reportGraphJump({ actionType, targetLabel, nodeId, fromState }) {
+        if (!conversationId) return;
+        const payload = {
+            conversation_id: conversationId,
+            action_type: actionType || "jump",
+            target_label: targetLabel || "",
+            node_id: nodeId,
+            from_state: fromState || "",
+            trigger: "graph_click"
+        };
+        try {
+            const response = await apiFetch('/api/graph/jump', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!data.success) {
+                return;
+            }
+            if (data.current_state) {
+                const input = document.getElementById('state-display');
+                if (input) input.value = data.current_state;
+            }
+            if (data.workflow_state) {
+                updateWorkflowStatus(data.workflow_state);
+            }
+        } catch (err) {
+            console.error('Graph jump failed', err);
+        }
+    }
+
+    // Click node: highlight and smoothly center
+        let activeNode = null;
+        function setActive(node, opts = {}) {
+            if (!node || node.empty()) return;
+            cy.elements().removeClass('active highlighted');
+            node.addClass('active');
+            node.connectedEdges().addClass('highlighted');
+            activeNode = node;
+            // if (opts.center !== false) {
+            //     cy.animate({
+            //         center: { eles: node }
+            //     }, { duration: 300, easing: 'ease-in-out-cubic' });
+            // }
+            // Sync current-state display
+            setStateDisplayByNode(node);
+        }
+        window.setActive = setActive;
+
+        cy.on('tap', 'node', (evt) => {
+            const clickedNode = evt.target;
+            const clickedLabel = clickedNode.data('label');
+            const prevLabel = activeNode ? (activeNode.data('label') || '') : '';
+            
+            // Check if this is a backtrack (clicking on a previous state)
+            const targetIndex = dfsPath.indexOf(clickedLabel);
+            let actionType = "jump";
+            if (targetIndex >= 0 && targetIndex < currentPathIndex) {
+                // This is backtracking
+                const response = handleBacktrack(clickedLabel);
+                addMessage('structured', 'assistant', response);
+                actionType = "backtrack";
+            }
+            
+            setActive(clickedNode);
+            reportGraphJump({
+                actionType,
+                targetLabel: clickedLabel,
+                nodeId: clickedNode.id(),
+                fromState: prevLabel
+            });
+        });
+
+    // No dropdown: current state is read-only text synced from graph
+
+    // Click on blank space - keep current state (don't clear)
+        cy.on('tap', (evt) => {
+            if (evt.target === cy) {
+                // Don't clear - keep current state active
+                // cy.elements().removeClass('active highlighted');
+                // activeNode = null;
+                // setStateDisplayByNode(null);
+            }
+        });
+
+    // Hover slight emphasis (add/remove temporary class)
+        cy.on('mouseover', 'node', (evt) => {
+            const n = evt.target; n.toggleClass('hover', true);
+        });
+        cy.on('mouseout', 'node', (evt) => {
+            const n = evt.target; n.toggleClass('hover', false);
+        });
+
+            // Expose helper to jump and highlight node
+            window.focusNodeById = function(id) {
+                const node = cy.getElementById(String(id));
+                if (node && !node.empty()) setActive(node);
+            }
+
+        // Initialize highlight to start node if present
+        const startNode = cy.nodes("[type = 'start']");
+        if (!startNode.empty()) {
+            setActive(startNode);
+            currentPathIndex = 0; // Initialize at start of DFS path
+        } else if (cy.nodes().length) {
+            setActive(cy.nodes()[0]);
+            currentPathIndex = 0;
+        }
+        if (activeNode) setStateDisplayByNode(activeNode);
+        if (STUDY_MODE) {
+            setStructuredInputEnabled(true);
+        }
+
+  });
+    }
+
+    // Global state
+        let isLoading = false;
+        let lastConfirmNodeId = null;
+        let lastWorkflowNodeId = null;
+
+    applyLanguage();
+    if (AUTO_LOGIN) {
+        login();
+    } else if (STUDY_MODE) {
+        setStructuredInputEnabled(false);
+        openLoginModal();
+    }
+
+    // Handle keyboard events
+        function handleKeyPress(event, agentType) {
+            if (event.key === 'Enter' && !isLoading) {
+                sendMessage(agentType);
+            }
+        }
+
+    // Send message
+        async function sendMessage(agentType) {
+            if (isLoading) return;
+            const inputId = `${agentType}-input`;
+            const input = document.getElementById(inputId);
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Show user message
+            addMessage(agentType, 'user', message);
+            input.value = '';
+            setLoading(true);
+
+            try {
+                // Dummy implementation: advance to next state in DFS path
+                if (0) {
+                    setTimeout(() => {
+                        const response = advanceToNextState();
+                        addMessage(agentType, 'assistant', response);
+                        setLoading(false);
+                    }, 800);
+                } else {
+                    // Original API call for other agents
+                    const response = await apiFetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message, conversation_id: conversationId })
+                    });
+
+                    const data = await response.json();
+                    if (data.conversation_id) {
+                        conversationId = data.conversation_id;
+                    }
+                    
+                    // 延迟显示AI回复，模拟思考时间
+                    setTimeout(() => {
+                        addMessage(agentType, 'assistant', data.response);
+                        
+                        // 更新流程状态（对所有代理类型都处理）
+                        if (data.workflow_state) {
+                            console.log('Updating workflow state:', data.workflow_state);
+                            updateWorkflowStatus(data.workflow_state);
+                        } else {
+                            console.log('No workflow_state in response:', data);
+                        }
+                        if (STUDY_MODE && agentType === 'structured' && isStopStateValue(data.current_state)) {
+                            setLoading(false);
+                            handleStudyTaskCompleted();
+                            return;
+                        }
+                        setLoading(false);
+                    }, 800);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage(agentType, 'assistant', t("chat_failed"));
+                setLoading(false);
+            }
+        }
+
+    // Add message to conversation area
+        function addMessage(agentType, sender, text) {
+            const conversationId = `${agentType}-conversation`;
+            const conversation = document.getElementById(conversationId);
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.textContent = text;
+
+            messageDiv.appendChild(bubbleDiv);
+            conversation.appendChild(messageDiv);
+
+            // Scroll to bottom
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+
+    // Update workflow status
+        function updateWorkflowStatus(workflowState) {
+            const { current_node, completed_nodes, nodes } = workflowState;
+            // Reflect state using the right Cytoscape flowchart only
+            updateFlowchart(current_node, completed_nodes, nodes);
+        }
+
+    // Update flowchart
+    function updateFlowchart(currentNode, completedNodes, nodes) {
+            // Use Cytoscape to highlight current node and edges; static DOM removed
+            if (!window.cy) return;
+            const cy = window.cy;
+            cy.elements().removeClass('active highlighted');
+
+            // Try matching node name with label
+            const idx = currentNode - 1;
+            if (idx >= 0 && nodes && nodes[idx]) {
+                const name = nodes[idx].name;
+                const norm = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+                let match = cy.nodes().filter(n => n.data('label') === name);
+                if (match.empty() && norm(name) === '<start>') {
+                    match = cy.nodes("[type = 'start']");
+                }
+                if (match.empty() && (norm(name) === '<end>' || norm(name) === 'stop' || norm(name) === 'end')) {
+                    match = cy.nodes("[type = 'stop']");
+                }
+                if (match.empty()) {
+                    match = cy.nodes().filter(n => norm(n.data('label')) === norm(name));
+                }
+                if (!match.empty()) {
+                    match.addClass('active');
+                    match.connectedEdges().addClass('highlighted');
+                    // Center current node
+                    cy.animate({ center: { eles: match }, zoom: Math.max(1.1, Math.min(1.6, cy.zoom())) }, { duration: 300 });
+                    // Sync current-state display
+                    const input = document.getElementById('state-display');
+                    if (input) input.value = match.data('label') || '';
+
+                    if (match.id() !== lastWorkflowNodeId) {
+                        lastWorkflowNodeId = match.id();
+                        const label = (match.data('label') || '').toLowerCase();
+                        const isStop = match.data('type') === 'stop' || label === 'stop' || label === '<end>' || label === 'end';
+                        const outgoing = match.outgoers('edge').length;
+                        const isConfirmNode = match.data('type') === 'action' && outgoing === 1 && !isStop;
+                        if (isConfirmNode && lastConfirmNodeId !== match.id()) {
+                            lastConfirmNodeId = match.id();
+                            const confirmPhrases = [
+                                t("confirm_phrase_1"),
+                                t("confirm_phrase_2"),
+                                t("confirm_phrase_3"),
+                                t("confirm_phrase_4")
+                            ];
+                            const msg = confirmPhrases[Math.floor(Math.random() * confirmPhrases.length)];
+                            addMessage('structured', 'assistant', msg);
+                        }
+                    }
+                }
+            }
+        }
+
+    // Set loading state
+        function setLoading(loading) {
+            isLoading = loading;
+            const sendButtons = document.querySelectorAll('.send-btn');
+            const inputs = document.querySelectorAll('.message-input');
+
+            sendButtons.forEach(btn => {
+                btn.disabled = loading;
+                if (loading) {
+                    btn.innerHTML = '<div class="loading"></div>';
+                } else {
+                    btn.textContent = t("send_button");
+                }
+            });
+
+            inputs.forEach(input => {
+                input.disabled = loading;
+                if (loading) {
+                    input.placeholder = t("processing_placeholder");
+                } else {
+                    // 恢复原始提示文本
+                    if (input.id === 'baseline-input') {
+                        input.placeholder = t("structured_input_active_placeholder");
+                    } else if (STUDY_MODE && input.id === 'structured-input') {
+                        input.placeholder = (studyGoalSelectionRequired && !studyGoalSelectedValue)
+                            ? t("task_target_select_hint_missing")
+                            : t("structured_input_active_placeholder");
+                    } else {
+                        input.placeholder = t("structured_input_default_placeholder");
+                    }
+                }
+            });
+
+            if (!loading) {
+                if (STUDY_MODE) {
+                    setStructuredInputEnabled(true);
+                }
+                const structuredInput = document.getElementById('structured-input');
+                if (structuredInput && !structuredInput.disabled) {
+                    structuredInput.focus();
+                }
+            }
+        }
+
+    // Reset conversation
+        async function resetConversation() {
+            if (isLoading) return;
+            if (STUDY_MODE) {
+                if (!studyTasks.length) return;
+                await startStudyTask(studyTaskIndex);
+                return;
+            }
+
+            try {
+                const resp = await apiFetch('/api/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ conversation_id: conversationId })
+                });
+                if (!resp.ok) {
+                    const text = await resp.text().catch(() => '');
+                    throw new Error(`/api/reset HTTP ${resp.status} ${resp.statusText} ${text}`);
+                }
+
+                // Clear conversation area
+                const baselineConv = document.getElementById('baseline-conversation');
+                const structuredConv = document.getElementById('structured-conversation');
+                if (baselineConv) {
+                    baselineConv.innerHTML = `
+                        <div class="message assistant">
+                            <div class="message-bubble">
+                                Hello! I'm Assistant A. How can I help you?
+                            </div>
+                        </div>
+                    `;
+                }
+
+                structuredConv.innerHTML = `
+                    <div class="message assistant">
+                        <div class="message-bubble" id="structured-welcome-message">
+                            ${t("demo_welcome")}
+                        </div>
+                    </div>
+                `;
+
+                // No progress bar; just reset flowchart
+
+                // Reset flowchart
+                resetFlowchart();
+
+                // Reset inputs
+                const baselineInput = document.getElementById('baseline-input');
+                if (baselineInput) baselineInput.value = '';
+                document.getElementById('structured-input').value = '';
+                document.getElementById('structured-input').placeholder = t("structured_input_default_placeholder");
+
+            } catch (error) {
+                console.error('Reset error:', error);
+                alert('Reset failed, please refresh and try again');
+            }
+        }
+
+    // Reset flowchart
+        function resetFlowchart() {
+            // Use Cytoscape to reset highlight state
+            if (!window.cy) return;
+            const cy = window.cy;
+            cy.elements().removeClass('active highlighted');
+            
+            // Reset DFS path index
+            currentPathIndex = 0;
+            isBacktracking = false;
+            
+            // Pick start node for initial highlight
+            const start = cy.nodes("[type = 'start']");
+            if (!start.empty()) {
+                start.addClass('active');
+                start.connectedEdges().addClass('highlighted');
+                cy.animate({ center: { eles: start }, zoom: 1.2 }, { duration: 250 });
+                const input = document.getElementById('state-display');
+                if (input) input.value = start.data('label') || '';
+            }
+        }
+
+    // Initialization after page load
+    document.addEventListener('DOMContentLoaded', function() {
+            applyLanguage();
+        });
+    </script>
+</body>
+</html>
